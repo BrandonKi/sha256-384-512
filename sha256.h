@@ -23,6 +23,8 @@ class sha256 {
 public:
     static std::string hash(const std::string &message) {
         message_ = pad(message);
+        //FIXME it seems like each block is being hashed correctly
+        // however multiple blocks are being "combined" in the right way
         for(int i = 0 ; i < message_.size() / 64; ++i)
             hash_block();
         return hash_to_string(hash_);
@@ -48,7 +50,7 @@ private:
             0x5be0cd19
     };
 
-    constexpr static inline u32 k[64] {
+    constexpr static inline std::array<u32, 64> k {
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
         0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
         0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -68,9 +70,8 @@ private:
     };
 
     static inline std::string message_;
-    static inline u32 a, b, c, d, e, f, g, h;
 
-    static std::string hash_to_string(std::array<u32, 8> hash) {
+    static std::string hash_to_string(std::array<u32, 8>& hash) {
         std::string hash_str;
         hash_str.reserve(257);
         for(auto i : hash) {
@@ -80,7 +81,7 @@ private:
     }
 
     template <typename T>
-    inline static std::string value_to_bytes(T value) {
+    inline static std::string value_to_bytes(const T value) {
         std::string result;
         for(int i = sizeof(value) - 1; i >= 0; --i)
             result.push_back(static_cast<u8>(value >> (i * 8)));
@@ -105,7 +106,7 @@ private:
         return (x >> n) | (x << (sizeof(u32) - n));
     }
 
-    inline static u32 ch(u32 x, u32 y, u32 z) {
+    inline static u32 ch(const u32 x, const u32 y, const u32 z) {
         return (x & y) ^ (~x & z);
     }
 
@@ -130,24 +131,23 @@ private:
     }
 
     static void hash_block() {
-        std::cout << "yo\n";
-        a = hash_[0];
-        b = hash_[1];
-        c = hash_[2];
-        d = hash_[3];
-        e = hash_[4];
-        f = hash_[5];
-        g = hash_[6];
-        h = hash_[7];
-
         u32 w[64];
         for(auto i = 0; i < 16; ++i)
             w[i] = static_cast<u8>(message_[i] << 24) | static_cast<u8>(message_[i + 1] << 16) |
-                    static_cast<u8>(message_[i + 2] << 8) | static_cast<u8>(message_[i + 3]);
-
-        for(auto j = 16; j < 64; ++j) {
+                   static_cast<u8>(message_[i + 2] << 8) | static_cast<u8>(message_[i + 3]);
+        for(auto j = 16; j < 64; ++j)
             w[j] = lsig1(w[j - 2]) + w[j - 7] + lsig0(w[j - 15]) + w[j - 16];
 
+        u32 a = hash_[0];
+        u32 b = hash_[1];
+        u32 c = hash_[2];
+        u32 d = hash_[3];
+        u32 e = hash_[4];
+        u32 f = hash_[5];
+        u32 g = hash_[6];
+        u32 h = hash_[7];
+
+        for(auto j = 0; j < 64; ++j) {
             u32 t1 = h + usig1(e) + ch(e, f, g) + k[j] + w[j];
             u32 t2 = usig0(a) + maj(a, b, c);
             h = g;
