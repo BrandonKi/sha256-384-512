@@ -23,10 +23,22 @@ class sha256 {
 public:
     static std::string hash(const std::string &message) {
         message_ = pad(message);
+
+        std::array<u32, 8> hash_ = {
+                0x6a09e667,
+                0xbb67ae85,
+                0x3c6ef372,
+                0xa54ff53a,
+                0x510e527f,
+                0x9b05688c,
+                0x1f83d9ab,
+                0x5be0cd19
+        };
+
         //FIXME it seems like each block is being hashed correctly
         // however multiple blocks are being "combined" in the right way
         for(int i = 0 ; i < message_.size() / 64; ++i)
-            hash_block();
+            hash_block(hash_, i);
         return hash_to_string(hash_);
     }
 
@@ -38,17 +50,6 @@ public:
     sha256& operator = (sha256&&) = delete;
 
 private:
-
-    static inline std::array<u32, 8> hash_ = {
-            0x6a09e667,
-            0xbb67ae85,
-            0x3c6ef372,
-            0xa54ff53a,
-            0x510e527f,
-            0x9b05688c,
-            0x1f83d9ab,
-            0x5be0cd19
-    };
 
     constexpr static inline std::array<u32, 64> k {
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
@@ -107,7 +108,7 @@ private:
     }
 
     inline static u32 ch(const u32 x, const u32 y, const u32 z) {
-        return (x & y) ^ (~x & z);
+        return (x & y) ^ ((~x) & z);
     }
 
     inline static u32 maj(const u32 x, const u32 y, const u32 z) {
@@ -130,11 +131,12 @@ private:
         return S(x, 17) ^ S(x, 19) ^ R(x, 10);
     }
 
-    static void hash_block() {
+    static void hash_block(std::array<u32, 8>& hash_, u32 block_num) {
+        auto block_start = block_num * 512;
         u32 w[64];
         for(auto i = 0; i < 16; ++i)
-            w[i] = static_cast<u8>(message_[i] << 24) | static_cast<u8>(message_[i + 1] << 16) |
-                   static_cast<u8>(message_[i + 2] << 8) | static_cast<u8>(message_[i + 3]);
+            w[i] = static_cast<u8>((message_[block_start + i] << 24) & 0xff) | static_cast<u8>((message_[block_start + i + 1] << 16) & 0xff) |
+                   static_cast<u8>((message_[block_start + i + 2] << 8) & 0xff) | static_cast<u8>((message_[block_start + i + 3]) & 0xff);
         for(auto j = 16; j < 64; ++j)
             w[j] = lsig1(w[j - 2]) + w[j - 7] + lsig0(w[j - 15]) + w[j - 16];
 
