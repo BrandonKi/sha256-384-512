@@ -7,6 +7,32 @@
 #include <cstdint>
 #include <algorithm>
 
+#include <sstream>
+#include <iomanip>
+#include <string>
+#include <cstdint>
+std::string string_to_hex(const std::string& in) {
+    std::stringstream ss;
+
+    ss << std::hex << std::setfill('0');
+    for(auto c : in)
+        ss << std::setw(2) << static_cast<unsigned int>(static_cast<unsigned char>(c));
+
+    return ss.str();
+}
+
+#include <bitset>
+std::string string_to_bin(const std::string& in) {
+    std::stringstream ss;
+
+    ss << std::dec;
+    for(char c : in)
+        ss << std::bitset<8>(c);
+
+    return ss.str();
+}
+
+
 class sha256 {
 
     using i8  = int8_t;
@@ -17,8 +43,8 @@ class sha256 {
     using u16 = uint16_t;
     using u32 = uint32_t;
     using u64 = uint64_t;
-    using f32 = float_t;
-    using f64 = double_t;
+    using f32 = float;
+    using f64 = double;
 
 public:
     static std::string hash(const std::string &message) {
@@ -36,7 +62,7 @@ public:
         };
 
         //FIXME it seems like each block is being hashed correctly
-        // however multiple blocks are being "combined" in the right way
+        // however multiple blocks are not being "combined" in the right way
         for(int i = 0 ; i < message_.size() / 64; ++i)
             hash_block(hash_, i);
         return hash_to_string(hash_);
@@ -91,7 +117,7 @@ private:
 
     inline static std::string pad(const std::string& message) {
         std::string result = message;
-        const auto msg_len = message.size();
+        const u64 msg_len = message.size();
         const auto num_zero_bytes = (56 - (msg_len + 1)) % 56;
         result.append(1, '\x80');
         result.append(num_zero_bytes, 0);
@@ -104,11 +130,11 @@ private:
     }
 
     inline static u32 S(const u32 x, const u32 n) {
-        return (x >> n) | (x << (sizeof(u32) - n));
+        return (x >> n) | (x << (32 - n));
     }
 
     inline static u32 ch(const u32 x, const u32 y, const u32 z) {
-        return (x & y) ^ ((~x) & z);
+        return (x & y) ^ (~x & z);
     }
 
     inline static u32 maj(const u32 x, const u32 y, const u32 z) {
@@ -132,13 +158,18 @@ private:
     }
 
     static void hash_block(std::array<u32, 8>& hash_, u32 block_num) {
-        auto block_start = block_num * 512;
+
+        std::cout << string_to_bin(message_) << '\n';
+
+        auto block_start = block_num * 512 / 8;
         u32 w[64];
-        for(auto i = 0; i < 16; ++i)
-            w[i] = static_cast<u8>((message_[block_start + i] << 24) & 0xff) | static_cast<u8>((message_[block_start + i + 1] << 16) & 0xff) |
-                   static_cast<u8>((message_[block_start + i + 2] << 8) & 0xff) | static_cast<u8>((message_[block_start + i + 3]) & 0xff);
-        for(auto j = 16; j < 64; ++j)
-            w[j] = lsig1(w[j - 2]) + w[j - 7] + lsig0(w[j - 15]) + w[j - 16];
+        for(auto i = 0; i < 64; i += 4)
+            w[i/4] = (static_cast<u8>(message_[block_start + i])) << 24 | (static_cast<u8>(message_[block_start + i + 1]) << 16) |
+                    (static_cast<u8>(message_[block_start + i + 2]) << 8) | static_cast<u8>((message_[block_start + i + 3]));
+        for(auto t = 16; t < 64; ++t)
+            w[t] = lsig1(w[t - 2]) + w[t - 7] + lsig0(w[t - 15]) + w[t - 16];
+
+        std::cout << '\n';
 
         u32 a = hash_[0];
         u32 b = hash_[1];
@@ -161,6 +192,7 @@ private:
             b = a;
             a = t1 + t2;
         }
+
         hash_[0] += a;
         hash_[1] += b;
         hash_[2] += c;
@@ -169,6 +201,15 @@ private:
         hash_[5] += f;
         hash_[6] += g;
         hash_[7] += h;
+
+//        std::cout << "0 " << std::bitset<32>(hash_[0]) << '\n';
+//        std::cout << "1 " << std::bitset<32>(hash_[1]) << '\n';
+//        std::cout << "2 " << std::bitset<32>(hash_[2]) << '\n';
+//        std::cout << "3 " << std::bitset<32>(hash_[3]) << '\n';
+//        std::cout << "4 " << std::bitset<32>(hash_[4]) << '\n';
+//        std::cout << "5 " << std::bitset<32>(hash_[5]) << '\n';
+//        std::cout << "6 " << std::bitset<32>(hash_[6]) << '\n';
+//        std::cout << "7 " << std::bitset<32>(hash_[7]) << '\n';
     }
 
 };
