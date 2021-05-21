@@ -101,9 +101,8 @@ private:
     static std::string hash_to_string(std::array<u32, 8>& hash) {
         std::string hash_str;
         hash_str.reserve(257);
-        for(auto i : hash) {
+        for(auto i : hash)
             hash_str += value_to_bytes(i);
-        }
         return hash_str;
     }
 
@@ -115,6 +114,7 @@ private:
         return result;
     }
 
+    // TODO fix padding with multi block messages
     inline static std::string pad(const std::string& message) {
         std::string result = message;
         const u64 msg_len = message.size();
@@ -159,7 +159,8 @@ private:
 
     static void hash_block(std::array<u32, 8>& hash_, u32 block_num) {
 
-        std::cout << string_to_bin(message_) << '\n';
+        // TODO remove me
+        std::cout << string_to_bin(message_) << "\n\n";
 
         auto block_start = block_num * 512 / 8;
         u32 w[64];
@@ -168,8 +169,6 @@ private:
                     (static_cast<u8>(message_[block_start + i + 2]) << 8) | static_cast<u8>((message_[block_start + i + 3]));
         for(auto t = 16; t < 64; ++t)
             w[t] = lsig1(w[t - 2]) + w[t - 7] + lsig0(w[t - 15]) + w[t - 16];
-
-        std::cout << '\n';
 
         u32 a = hash_[0];
         u32 b = hash_[1];
@@ -201,15 +200,6 @@ private:
         hash_[5] += f;
         hash_[6] += g;
         hash_[7] += h;
-
-//        std::cout << "0 " << std::bitset<32>(hash_[0]) << '\n';
-//        std::cout << "1 " << std::bitset<32>(hash_[1]) << '\n';
-//        std::cout << "2 " << std::bitset<32>(hash_[2]) << '\n';
-//        std::cout << "3 " << std::bitset<32>(hash_[3]) << '\n';
-//        std::cout << "4 " << std::bitset<32>(hash_[4]) << '\n';
-//        std::cout << "5 " << std::bitset<32>(hash_[5]) << '\n';
-//        std::cout << "6 " << std::bitset<32>(hash_[6]) << '\n';
-//        std::cout << "7 " << std::bitset<32>(hash_[7]) << '\n';
     }
 
 };
