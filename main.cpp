@@ -6,5 +6,6 @@
 
 
 int main() {
-     std::cout << string_to_hex(sha256::hash("AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPAABBCCDDEEFFGGHHIIJJKKLLMMNNOOPP"));
+     std::cout << sha256::to_hex(sha256::hash("abc")) << '\n';
+
 }
