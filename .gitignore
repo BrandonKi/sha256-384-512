@@ -3,6 +3,7 @@
 /out
 /.vs
 /build
+/.vscode
 
 # Prerequisites
 *.d
