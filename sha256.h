@@ -1,3 +1,37 @@
+/**
+ * @file sha256.h
+ * @author Brandon Kirincich
+ * @version 1.0
+ * @date 2021-05-22
+ * 
+ * @example 
+ *  // hash a message and print the resulting hash in hex
+ *  std::cout << sha256::to_hex(sha256::hash("abc")) << '\n';
+ * 
+ * @copyright 
+ *  MIT License
+ *
+ *  Copyright (c) 2021 Brandon Kirincich
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ * 
+ */
 #ifndef SHA256_384_512_SHA256_H
 #define SHA256_384_512_SHA256_H
 
@@ -9,46 +43,41 @@
 
 #include <sstream>
 #include <iomanip>
-#include <string>
-#include <cstdint>
-std::string string_to_hex(const std::string& in) {
-    std::stringstream ss;
-
-    ss << std::hex << std::setfill('0');
-    for(auto c : in)
-        ss << std::setw(2) << static_cast<unsigned int>(static_cast<unsigned char>(c));
-
-    return ss.str();
-}
-
-#include <bitset>
-std::string string_to_bin(const std::string& in) {
-    std::stringstream ss;
-
-    ss << std::dec;
-    for(char c : in)
-        ss << std::bitset<8>(c);
-
-    return ss.str();
-}
-
 
 class sha256 {
 
-    using i8  = int8_t;
-    using i16 = int16_t;
-    using i32 = int32_t;
-    using i64 = int64_t;
-    using u8  = uint8_t;
-    using u16 = uint16_t;
+    using u8 = uint8_t;
     using u32 = uint32_t;
     using u64 = uint64_t;
-    using f32 = float;
-    using f64 = double;
+
+    constexpr static auto BLOCK_SIZE = 64;
 
 public:
-    static std::string hash(const std::string &message) {
-        message_ = pad(message);
+
+    /**
+     * convert the result of sha256::hash to hex
+     *
+     * @param in input string
+     * @return string converted to hex
+     */
+    static std::string to_hex(const std::string& in) {
+        std::stringstream ss;
+
+        ss << std::hex << std::setfill('0');
+        for (auto c : in)
+            ss << std::setw(2) << static_cast<unsigned int>(static_cast<unsigned char>(c));
+
+        return ss.str();
+    }
+
+    /**
+     * performs a sha256 hash on the input message
+     *
+     * @param message input message
+     * @return sha256 hash of input message
+     */
+    static std::string hash(const std::string& message) {
+        std::string message_ = pad(message);
 
         std::array<u32, 8> hash_ = {
                 0x6a09e667,
@@ -61,64 +90,64 @@ public:
                 0x5be0cd19
         };
 
-        //FIXME it seems like each block is being hashed correctly
-        // however multiple blocks are not being "combined" in the right way
-        for(int i = 0 ; i < message_.size() / 64; ++i)
-            hash_block(hash_, i);
+        for (int i = 0; i < message_.size() / BLOCK_SIZE; ++i)
+            hash_block(message_, hash_, i);
         return hash_to_string(hash_);
     }
 
     sha256() = delete;
+
     ~sha256() = delete;
+
     sha256(const sha256&) = delete;
-    sha256& operator = (const sha256&) = delete;
+
+    sha256& operator=(const sha256&) = delete;
+
     sha256(const sha256&&) = delete;
-    sha256& operator = (sha256&&) = delete;
+
+    sha256& operator=(sha256&&) = delete;
 
 private:
 
-    constexpr static inline std::array<u32, 64> k {
-        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
-        0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
-        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
-        0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
-        0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
-        0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
-        0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
-        0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
-        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+    constexpr static inline std::array<u32, BLOCK_SIZE> k {
+            0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+            0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+            0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+            0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+            0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
+            0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+            0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+            0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+            0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+            0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+            0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
+            0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+            0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
+            0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+            0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+            0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
     };
 
-    static inline std::string message_;
-
-    static std::string hash_to_string(std::array<u32, 8>& hash) {
+    static std::string hash_to_string(const std::array<u32, 8>& hash) {
         std::string hash_str;
         hash_str.reserve(257);
-        for(auto i : hash)
+        for (auto i : hash)
             hash_str += value_to_bytes(i);
         return hash_str;
     }
 
-    template <typename T>
+    template<typename T>
     inline static std::string value_to_bytes(const T value) {
         std::string result;
-        for(int i = sizeof(value) - 1; i >= 0; --i)
+        for (int i = sizeof(value) - 1; i >= 0; --i)
             result.push_back(static_cast<u8>(value >> (i * 8)));
         return result;
     }
 
-    // TODO fix padding with multi block messages
     inline static std::string pad(const std::string& message) {
         std::string result = message;
         const u64 msg_len = message.size();
-        const auto num_zero_bytes = (56 - (msg_len + 1)) % 56;
+        auto num_zero_bytes = 56 - ((msg_len + 1) % BLOCK_SIZE);
         result.append(1, '\x80');
         result.append(num_zero_bytes, 0);
         result.append(value_to_bytes(msg_len * 8));
@@ -157,17 +186,16 @@ private:
         return S(x, 17) ^ S(x, 19) ^ R(x, 10);
     }
 
-    static void hash_block(std::array<u32, 8>& hash_, u32 block_num) {
+    static void hash_block(const std::string& message_, std::array<u32, 8>& hash_, u32 block_num) {
+        auto block_start = block_num * BLOCK_SIZE;
+        u32 w[BLOCK_SIZE];
+        for (auto i = 0; i < BLOCK_SIZE; i += 4)
+            w[i / 4] = (static_cast<u8>(message_[block_start + i])) << 24 |
+                       (static_cast<u8>(message_[block_start + i + 1]) << 16) |
+                       (static_cast<u8>(message_[block_start + i + 2]) << 8) |
+                       static_cast<u8>((message_[block_start + i + 3]));
 
-        // TODO remove me
-        std::cout << string_to_bin(message_) << "\n\n";
-
-        auto block_start = block_num * 512 / 8;
-        u32 w[64];
-        for(auto i = 0; i < 64; i += 4)
-            w[i/4] = (static_cast<u8>(message_[block_start + i])) << 24 | (static_cast<u8>(message_[block_start + i + 1]) << 16) |
-                    (static_cast<u8>(message_[block_start + i + 2]) << 8) | static_cast<u8>((message_[block_start + i + 3]));
-        for(auto t = 16; t < 64; ++t)
+        for (auto t = 16; t < BLOCK_SIZE; ++t)
             w[t] = lsig1(w[t - 2]) + w[t - 7] + lsig0(w[t - 15]) + w[t - 16];
 
         u32 a = hash_[0];
@@ -179,7 +207,7 @@ private:
         u32 g = hash_[6];
         u32 h = hash_[7];
 
-        for(auto j = 0; j < 64; ++j) {
+        for (auto j = 0; j < BLOCK_SIZE; ++j) {
             u32 t1 = h + usig1(e) + ch(e, f, g) + k[j] + w[j];
             u32 t2 = usig0(a) + maj(a, b, c);
             h = g;
@@ -201,8 +229,6 @@ private:
         hash_[6] += g;
         hash_[7] += h;
     }
-
 };
-
 
 #endif //SHA256_384_512_SHA256_H
