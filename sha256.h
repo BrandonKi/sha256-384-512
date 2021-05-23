@@ -6,7 +6,7 @@
  * 
  * @example 
  *  // hash a message and print the resulting hash in hex
- *  std::cout << sha256::to_hex(sha256::hash("abc")) << '\n';
+ *  std::cout << sha256::hash("abc") << '\n';
  * 
  * @copyright 
  *  MIT License
@@ -36,11 +36,8 @@
 #define SHA256_384_512_SHA256_H
 
 #include <string>
-#include <vector>
 #include <array>
 #include <cstdint>
-#include <algorithm>
-
 #include <sstream>
 #include <iomanip>
 
@@ -93,7 +90,7 @@ public:
 
 private:
 
-    constexpr static inline std::array<u32, BLOCK_SIZE> k {
+    inline constexpr static std::array<u32, BLOCK_SIZE> k {
             0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
             0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
             0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -112,13 +109,7 @@ private:
             0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
     };
 
-    /**
-     * convert the result of sha256::hash to hex
-     *
-     * @param in input string
-     * @return string converted to hex
-     */
-    static std::string to_hex(const std::string& in) {
+    inline static std::string to_hex(const std::string& in) {
         std::stringstream ss;
 
         ss << std::hex << std::setfill('0');
@@ -128,7 +119,7 @@ private:
         return ss.str();
     }
 
-    static std::string hash_to_string(const std::array<u32, 8>& hash) {
+    inline static std::string hash_to_string(const std::array<u32, 8>& hash) {
         std::string hash_str;
         hash_str.reserve(257);
         for (auto i : hash)
@@ -154,35 +145,35 @@ private:
         return result;
     }
 
-    inline static u32 R(const u32 x, const u32 n) {
+    inline constexpr static u32 R(const u32 x, const u32 n) {
         return x >> n;
     }
 
-    inline static u32 S(const u32 x, const u32 n) {
+    inline constexpr static u32 S(const u32 x, const u32 n) {
         return (x >> n) | (x << (32 - n));
     }
 
-    inline static u32 ch(const u32 x, const u32 y, const u32 z) {
+    inline constexpr static u32 ch(const u32 x, const u32 y, const u32 z) {
         return (x & y) ^ (~x & z);
     }
 
-    inline static u32 maj(const u32 x, const u32 y, const u32 z) {
+    inline constexpr static u32 maj(const u32 x, const u32 y, const u32 z) {
         return (x & y) ^ (x & z) ^ (y & z);
     }
 
-    inline static u32 usig0(const u32 x) {
+    inline constexpr static u32 usig0(const u32 x) {
         return S(x, 2) ^ S(x, 13) ^ S(x, 22);
     }
 
-    inline static u32 usig1(const u32 x) {
+    inline constexpr static u32 usig1(const u32 x) {
         return S(x, 6) ^ S(x, 11) ^ S(x, 25);
     }
 
-    inline static u32 lsig0(const u32 x) {
+    inline constexpr static u32 lsig0(const u32 x) {
         return S(x, 7) ^ S(x, 18) ^ R(x, 3);
     }
 
-    inline static u32 lsig1(const u32 x) {
+    inline constexpr static u32 lsig1(const u32 x) {
         return S(x, 17) ^ S(x, 19) ^ R(x, 10);
     }
 
