@@ -55,22 +55,6 @@ class sha256 {
 public:
 
     /**
-     * convert the result of sha256::hash to hex
-     *
-     * @param in input string
-     * @return string converted to hex
-     */
-    static std::string to_hex(const std::string& in) {
-        std::stringstream ss;
-
-        ss << std::hex << std::setfill('0');
-        for (auto c : in)
-            ss << std::setw(2) << static_cast<unsigned int>(static_cast<unsigned char>(c));
-
-        return ss.str();
-    }
-
-    /**
      * performs a sha256 hash on the input message
      *
      * @param message input message
@@ -92,7 +76,7 @@ public:
 
         for (int i = 0; i < message_.size() / BLOCK_SIZE; ++i)
             hash_block(message_, hash_, i);
-        return hash_to_string(hash_);
+        return to_hex(hash_to_string(hash_));
     }
 
     sha256() = delete;
@@ -127,6 +111,22 @@ private:
             0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
             0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
     };
+
+    /**
+     * convert the result of sha256::hash to hex
+     *
+     * @param in input string
+     * @return string converted to hex
+     */
+    static std::string to_hex(const std::string& in) {
+        std::stringstream ss;
+
+        ss << std::hex << std::setfill('0');
+        for (auto c : in)
+            ss << std::setw(2) << static_cast<unsigned int>(static_cast<unsigned char>(c));
+
+        return ss.str();
+    }
 
     static std::string hash_to_string(const std::array<u32, 8>& hash) {
         std::string hash_str;
