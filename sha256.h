@@ -58,7 +58,7 @@ public:
      * @return sha256 hash of input message
      */
     static std::string hash(const std::string& message) {
-        std::string message_ = pad(message);
+        std::string padded_message = pad(message);
 
         std::array<u32, 8> hash_ = {
                 0x6a09e667,
@@ -71,8 +71,8 @@ public:
                 0x5be0cd19
         };
 
-        for (int i = 0; i < message_.size() / BLOCK_SIZE; ++i)
-            hash_block(message_, hash_, i);
+        for (u32 i = 0; i < padded_message.size() / BLOCK_SIZE; ++i)
+            hash_block(padded_message, hash_, i);
         return to_hex(hash_to_string(hash_));
     }
 
@@ -179,14 +179,14 @@ private:
 
     static void hash_block(const std::string& message_, std::array<u32, 8>& hash_, u32 block_num) {
         auto block_start = block_num * BLOCK_SIZE;
-        u32 w[BLOCK_SIZE];
-        for (auto i = 0; i < BLOCK_SIZE; i += 4)
+        u32 w[64];
+        for (u8 i = 0; i < 64; i += 4)
             w[i / 4] = (static_cast<u8>(message_[block_start + i])) << 24 |
                        (static_cast<u8>(message_[block_start + i + 1]) << 16) |
                        (static_cast<u8>(message_[block_start + i + 2]) << 8) |
                        static_cast<u8>((message_[block_start + i + 3]));
 
-        for (auto t = 16; t < BLOCK_SIZE; ++t)
+        for (u8 t = 16; t < 64; ++t)
             w[t] = lsig1(w[t - 2]) + w[t - 7] + lsig0(w[t - 15]) + w[t - 16];
 
         u32 a = hash_[0];
@@ -198,7 +198,7 @@ private:
         u32 g = hash_[6];
         u32 h = hash_[7];
 
-        for (auto j = 0; j < BLOCK_SIZE; ++j) {
+        for (u8 j = 0; j < 64; ++j) {
             u32 t1 = h + usig1(e) + ch(e, f, g) + k[j] + w[j];
             u32 t2 = usig0(a) + maj(a, b, c);
             h = g;
